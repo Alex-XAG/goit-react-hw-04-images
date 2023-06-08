@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { InfinitySpin } from 'react-loader-spinner';
 import { ButtonLoadMore } from '../ButtonLoadMore/ButtonLoadMore';
 import { fetchImages } from '../api/FetchImage';
@@ -9,84 +9,75 @@ import { SearchBar } from '../Searchbar/Searchbar';
 import { ImageGallery } from '../ImageGallery/ImageGallery';
 import { AppStyle } from './App.styled';
 
-export class App extends React.Component {
-  state = {
-    searchQuery: '',
-    page: 1,
-    showBtn: false,
-    images: [],
-    status: 'idle',
-  };
+export const App = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const [showBtn, setShowBtn] = useState(false);
+  const [images, setImages] = useState([]);
+  const [status, setStatus] = useState('idle');
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { searchQuery, page } = this.state;
-
-    if (prevState.searchQuery !== searchQuery || prevState.page !== page) {
-      this.setState({ status: 'pending' });
-      try {
-        await fetchImages(searchQuery, page).then(images => {
-          if (!images.hits.length) {
-            this.setState({ status: 'rejected' });
-            return;
-          }
-          this.setState(prevState => ({
-            images:
-              page !== 1
-                ? [...prevState.images, ...images.hits]
-                : [...images.hits],
-            showBtn:
-              images.hits.length !== 0 && page < Math.ceil(images.total / 12),
-            status: 'resolved',
-          }));
-        });
-      } catch (error) {
-        toast.error(error.message, {
-          position: toast.POSITION.TOP_LEFT,
-        });
-        return;
-      }
+  useEffect(() => {
+    if (searchQuery === '') {
+      return;
     }
-  }
+    setStatus('pending');
+    try {
+      fetchImages(searchQuery, page).then(images => {
+        if (!images.hits.length) {
+          setStatus('rejected');
+          return;
+        }
+        setImages(prevImages =>
+          page !== 1 ? [...prevImages, ...images.hits] : [...images.hits]
+        );
 
-  handleSubmitQuery = query => {
-    this.setState({ searchQuery: query, page: 1 });
+        setShowBtn(
+          images.hits.length !== 0 && page < Math.ceil(images.total / 12)
+        );
+        setStatus('resolved');
+      });
+    } catch (error) {
+      toast.error(error.message, {
+        position: toast.POSITION.TOP_LEFT,
+      });
+      return;
+    }
+  }, [searchQuery, page]);
+
+  const handleSubmitQuery = query => {
+    setSearchQuery(query);
+    setPage(1);
   };
 
-  handleLoadMoreBtn = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const handleLoadMoreBtn = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  render() {
-    const { status, images, showBtn } = this.state;
+  return (
+    <AppStyle
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        fontSize: 40,
+        color: '#010101',
+      }}
+    >
+      <SearchBar onSubmit={handleSubmitQuery} />
 
-    return (
-      <AppStyle
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          fontSize: 40,
-          color: '#010101',
-        }}
-      >
-        <SearchBar onSubmit={this.handleSubmitQuery} />
+      <ImageGallery status={status} images={images} />
+      {status === 'idle' && <h2>Insert query!!!</h2>}
 
-        <ImageGallery status={status} images={images} />
-        {status === 'idle' && <h2>Insert query!!!</h2>}
+      {showBtn && (
+        <ButtonLoadMore status={status} onClick={handleLoadMoreBtn} />
+      )}
+      {status === 'pending' && <InfinitySpin width="300" color="#4fa94d" />}
+      {status === 'rejected' && (
+        <h3>Your query did't give any results, please, try other request!!!</h3>
+      )}
 
-        {showBtn && (
-          <ButtonLoadMore status={status} onClick={this.handleLoadMoreBtn} />
-        )}
-        {status === 'pending' && <InfinitySpin width="300" color="#4fa94d" />}
-        {status === 'rejected' && (
-          <h3>
-            Your query did't give any results, please, try other request!!!
-          </h3>
-        )}
-
-        <ToastContainer />
-      </AppStyle>
-    );
-  }
-}
+      <ToastContainer />
+    </AppStyle>
+  );
+};

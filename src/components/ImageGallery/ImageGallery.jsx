@@ -1,28 +1,24 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, { shape } from 'prop-types';
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import { ImageList } from './ImageGallery.styled';
 
-export class ImageGallery extends React.Component {
-  render() {
-    const { images } = this.props;
+export const ImageGallery = ({ images }) => {
+  const showGallery = images.length !== 0;
 
-    const showGallery = images.length !== 0;
-
-    if (showGallery) {
-      return (
-        <>
-          <ImageList>
-            {images.map(image => (
-              <ImageGalleryItem key={image.id} image={image} />
-            ))}
-          </ImageList>
-        </>
-      );
-    }
+  if (showGallery) {
+    return (
+      <>
+        <ImageList>
+          {images.map(image => (
+            <ImageGalleryItem key={image.id} image={image} />
+          ))}
+        </ImageList>
+      </>
+    );
   }
-}
+};
 
 ImageGallery.propTypes = {
-  searchQuery: PropTypes.array.isRequired,
+  images: PropTypes.arrayOf(shape(PropTypes.object.isRequired)),
 };

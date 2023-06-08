@@ -1,7 +1,7 @@
-import React from 'react';
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { createPortal } from 'react-dom';
-import { ModaBackdrop, ModaContent } from './Modal.styled';
+import { ModalBackdrop, ModalContent } from './Modal.styled';
 
 // Modal window (componentDidMount and componentWillUnmount)
 // Problem with z-index, how to solve without bad code (portals)
@@ -10,36 +10,34 @@ import { ModaBackdrop, ModaContent } from './Modal.styled';
 
 const modalRoot = document.querySelector('#modal-root');
 
-export class Modal extends React.Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeydown);
-  }
+export const Modal = ({ handleCloseModal, children }) => {
+  useEffect(() => {
+    const handleKeyDown = e => {
+      if (e.code === 'Escape') {
+        handleCloseModal();
+      }
+    };
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeydown);
-  }
+    window.addEventListener('keydown', handleKeyDown);
 
-  handleKeydown = e => {
-    if (e.code === 'Escape') {
-      this.props.handleCloseModal();
-    }
-  };
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleCloseModal]);
 
-  handleBackdropClick = evt => {
+  const handleBackdropClick = evt => {
     if (evt.currentTarget === evt.target) {
-      this.props.handleCloseModal();
+      handleCloseModal();
     }
   };
 
-  render() {
-    return createPortal(
-      <ModaBackdrop onClick={this.handleBackdropClick}>
-        <ModaContent>{this.props.children}</ModaContent>
-      </ModaBackdrop>,
-      modalRoot
-    );
-  }
-}
+  return createPortal(
+    <ModalBackdrop onClick={handleBackdropClick}>
+      <ModalContent>{children}</ModalContent>
+    </ModalBackdrop>,
+    modalRoot
+  );
+};
 
 Modal.propTypes = {
   handleCloseModal: PropTypes.func.isRequired,
