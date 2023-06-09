@@ -47,6 +47,7 @@ export const App = () => {
   const handleSubmitQuery = query => {
     setSearchQuery(query);
     setPage(1);
+    setImages([]);
   };
 
   const handleLoadMoreBtn = () => {
